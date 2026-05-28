@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>电子合同签署</title>
+<style>
+  :root {
+    --primary: #1a3a5c;
+    --gold: #b8860b;
+    --gold-light: #d4a843;
+    --bg: #f5f3ef;
+    --card-bg: #ffffff;
+    --text: #2c2c2c;
+    --text-secondary: #666;
+    --border: #e0dcd5;
+    --error: #c0392b;
+    --success: #27ae60;
+    --danger: #e74c3c;
+    --radius: 10px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+  }
+
+  .app-container {
+    width: 100%;
+    max-width: 480px;
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ========== Header ========== */
+  .header {
+    background: linear-gradient(135deg, #1a3a5c 0%, #1f4d7a 100%);
+    padding: 20px 24px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-icon {
+    width: 44px; height: 44px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 8px;
+    font-size: 22px;
+  }
+  .header h1 {
+    color: #fff;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .header .subtitle {
+    color: rgba(255,255,255,0.7);
+    font-size: 12px;
+    margin-top: 2px;
+  }
+
+  /* ========== Step Indicator ========== */
+  .step-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 24px;
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+  }
+  .step-dot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+    transition: all 0.3s;
+  }
+  .step-dot.active {
+    background: var(--primary);
+    color: #fff;
+  }
+  .step-dot.done {
+    background: var(--success);
+    color: #fff;
+  }
+  .step-dot.pending {
+    background: #e8e5df;
+    color: #999;
+  }
+  .step-line {
+    width: 60px; height: 2px;
+    background: #e8e5df;
+    margin: 0 8px;
+    transition: background 0.3s;
+  }
+  .step-line.done { background: var(--success); }
+  .step-label {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 24px 12px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    gap: 48px;
+  }
+  .step-label span { flex: 1; text-align: center; }
+
+  /* ========== Pages ========== */
+  .page {
+    display: none;
+    padding: 16px;
+    padding-bottom: 100px;
+  }
+  .page.active { display: block; }
+
+  /* ========== Contract Section ========== */
+  .contract-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .contract-card-header {
+    background: #faf9f7;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .contract-card-header .icon {
+    font-size: 20px;
+  }
+  .contract-card-header h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--primary);
+  }
+  .contract-body {
+    padding: 16px;
+    max-height: 280px;
+    overflow-y: auto;
+    font-size: 13px;
+    color: #444;
+    line-height: 1.9;
+    -webkit-overflow-scrolling: touch;
+  }
+  .contract-body::-webkit-scrollbar { width: 3px; }
+  .contract-body::-webkit-scrollbar-thumb {
+    background: #d0cdc5;
+    border-radius: 3px;
+  }
+  .contract-body h4 {
+    text-align: center;
+    font-size: 15px;
+    margin-bottom: 12px;
+    color: var(--primary);
+  }
+  .contract-body p { margin-bottom: 8px; text-indent: 2em; }
+  .contract-body .signature-line {
+    display: flex; justify-content: space-between;
+    margin-top: 20px; text-indent: 0;
+  }
+  .contract-body .signature-line span { text-indent: 0; }
+
+  .reading-progress {
+    height: 3px;
+    background: #e8e5df;
+    position: relative;
+  }
+  .reading-progress-bar {
+    height: 100%;
+    background: var(--gold);
+    width: 0%;
+    transition: width 0.1s;
+  }
+
+  /* ========== Form Section ========== */
+  .form-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px 16px;
+    margin-bottom: 16px;
+  }
+  .form-card h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .form-group {
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .form-group label .required {
+    color: var(--error);
+    margin-left: 2px;
+  }
+  .form-group input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 15px;
+    color: var(--text);
+    background: #fafaf9;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    font-family: inherit;
+  }
+  .form-group input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26,58,92,0.08);
+    background: #fff;
+  }
+  .form-group input.error {
+    border-color: var(--error);
+    background: #fefafa;
+  }
+  .form-group .error-msg {
+    font-size: 11px;
+    color: var(--error);
+    margin-top: 4px;
+    display: none;
+  }
+  .form-group input.error + .error-msg { display: block; }
+
+  /* ========== Checkbox ========== */
+  .agree-box {
+    background: #faf9f7;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    margin-bottom: 16px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .agree-box.checked {
+    border-color: var(--primary);
+    background: #f5f8fb;
+  }
+  .agree-box .checkbox-icon {
+    width: 22px; height: 22px;
+    min-width: 22px;
+    border: 2px solid #bbb;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    margin-top: 1px;
+    font-size: 13px;
+    color: transparent;
+  }
+  .agree-box.checked .checkbox-icon {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+  }
+  .agree-box .agree-text {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.5;
+  }
+
+  /* ========== Countdown & Button ========== */
+  .action-area {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: #fff;
+    padding: 14px 16px;
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .countdown-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .countdown-ring {
+    width: 36px; height: 36px;
+    position: relative;
+  }
+  .countdown-ring svg {
+    transform: rotate(-90deg);
+  }
+  .countdown-ring .bg-circle {
+    fill: none;
+    stroke: #e8e5df;
+    stroke-width: 3;
+  }
+  .countdown-ring .fg-circle {
+    fill: none;
+    stroke: var(--gold);
+    stroke-width: 3;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear;
+  }
+  .countdown-number {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+  .countdown-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .countdown-text em {
+    font-style: normal;
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  .btn-submit {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    letter-spacing: 1px;
+    font-family: inherit;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-submit:disabled {
+    background: #d5d2cb;
+    color: #999;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  .btn-submit.enabled {
+    background: linear-gradient(135deg, #1a3a5c 0%, #1f4d7a 100%);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(26,58,92,0.35);
+  }
+  .btn-submit.enabled:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+  .btn-submit .lock-icon {
+    margin-right: 4px;
+  }
+
+  /* ========== Page 2: Payment ========== */
+  .status-banner {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: #fff;
+    padding: 14px 16px;
+    border-radius: var(--radius);
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .status-banner .check-icon {
+    font-size: 28px;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .status-banner h3 { font-size: 15px; font-weight: 600; }
+  .status-banner p { font-size: 12px; opacity: 0.9; margin-top: 2px; }
+
+  .payment-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px 16px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .payment-card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 6px;
+  }
+  .payment-card .amount {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--error);
+    margin: 8px 0;
+  }
+  .payment-card .amount span { font-size: 16px; }
+  .qr-wrapper {
+    background: #fff;
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px auto;
+    max-width: 260px;
+    position: relative;
+  }
+  .qr-wrapper img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 6px;
+  }
+  .qr-wrapper .qr-placeholder {
+    background: #faf9f7;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 50px 20px;
+    color: #bbb;
+    font-size: 13px;
+  }
+  .qr-tip {
+    color: var(--danger);
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 12px;
+    line-height: 1.7;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  .qr-note {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+  }
+
+  .info-card {
+    background: #fffbf0;
+    border: 1px solid #f0d78c;
+    border-radius: var(--radius);
+    padding: 14px;
+    font-size: 12px;
+    color: #8a6d14;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .info-card .info-icon { font-size: 18px; flex-shrink: 0; }
+
+  .btn-confirm {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    letter-spacing: 1px;
+    font-family: inherit;
+    background: var(--success);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(39,174,96,0.3);
+  }
+  .btn-confirm:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+
+  /* ========== Success Page ========== */
+  .success-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 32px 20px;
+    text-align: center;
+  }
+  .success-card .big-check {
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 32px;
+    color: #fff;
+  }
+  .success-card h2 {
+    font-size: 18px;
+    color: var(--primary);
+    margin-bottom: 8px;
+  }
+  .success-card .order-info {
+    background: #faf9f7;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: left;
+    font-size: 13px;
+    margin-top: 16px;
+  }
+  .success-card .order-info .row {
+    display: flex; justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid #eee;
+  }
+  .success-card .order-info .row:last-child { border: none; }
+  .success-card .order-info .label { color: var(--text-secondary); }
+  .success-card .order-info .value { font-weight: 500; }
+
+  /* ========== Modal ========== */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px 20px;
+    text-align: center;
+    width: 100%;
+    max-width: 340px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  }
+  .modal-box h3 { font-size: 16px; margin-bottom: 8px; color: var(--primary); }
+  .modal-box p { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; }
+  .modal-box .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid #e8e5df;
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .modal-box .btn-close {
+    padding: 10px 32px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* ========== Toast ========== */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    z-index: 300;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show {
+    opacity: 1;
+  }
+
+  /* ========== Privacy Notice ========== */
+  .privacy-note {
+    text-align: center;
+    font-size: 11px;
+    color: #bbb;
+    padding: 4px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+
+  <!-- ===== Header ===== -->
+  <div class="header">
+    <div class="header-icon">📋</div>
+    <h1>房屋租赁电子合同签署</h1>
+    <div class="subtitle">请仔细阅读合同内容后填写信息</div>
+  </div>
+
+  <!-- ===== Step Indicator ===== -->
+  <div class="step-indicator">
+    <div class="step-dot active" id="stepDot1">1</div>
+    <div class="step-line" id="stepLine"></div>
+    <div class="step-dot pending" id="stepDot2">2</div>
+    <div class="step-line" id="stepLine2"></div>
+    <div class="step-dot pending" id="stepDot3">3</div>
+  </div>
+  <div class="step-label">
+    <span>签署合同</span>
+    <span>支付租金</span>
+    <span>签署完成</span>
+  </div>
+
+  <!-- ============================================= -->
+  <!-- PAGE 1: 合同展示与填写 -->
+  <!-- ============================================= -->
+  <div class="page active" id="pageContract">
+
+    <!-- 合同文档 -->
+    <div class="contract-card">
+      <div class="contract-card-header">
+        <span class="icon">📄</span>
+        <h3>房屋租赁合同</h3>
+      </div>
+      <div class="reading-progress">
+        <div class="reading-progress-bar" id="readingBar"></div>
+      </div>
+      <div class="contract-body" id="contractBody" onscroll="updateReadingProgress()">
+        <h4>房屋租赁合同</h4>
+        <p style="text-indent:0;text-align:center;font-weight:600;">合同编号：ZL-2026-______</p>
+
+        <p><strong>出租方（甲方）：</strong>________________________</p>
+        <p>身份证号码：________________________</p>
+        <p>联系电话：________________________</p>
+        <p><strong>承租方（乙方）：</strong>________________________</p>
+        <p>身份证号码：________________________</p>
+        <p>联系电话：________________________</p>
+
+        <p>根据《中华人民共和国民法典》及有关法律法规，甲乙双方在平等、自愿的基础上，就房屋租赁事宜达成如下协议：</p>
+
+        <p><strong>第一条 房屋基本情况</strong><br>
+        甲方将坐落于________________________的房屋（以下简称"该房屋"）出租给乙方使用。该房屋建筑面积为______平方米，房屋用途为居住。</p>
+
+        <p><strong>第二条 租赁期限</strong><br>
+        租赁期共______个月，自______年______月______日起至______年______月______日止。租赁期满，甲方有权收回该房屋，乙方应如期交还。乙方如要求续租，则必须在租赁期满前30日内通知甲方，经甲方同意后重新签订租赁合同。</p>
+
+        <p><strong>第三条 租金及支付方式</strong><br>
+        1. 该房屋月租金为人民币______元（大写：______元整）。<br>
+        2. 租金支付方式为：押______付______，每期支付人民币______元。<br>
+        3. 乙方应于每期开始前7日内支付当期租金。逾期支付的，每逾期一日，乙方需按日租金的1%支付违约金。</p>
+
+        <p><strong>第四条 押金</strong><br>
+        1. 乙方于签约之日向甲方支付押金人民币______元（大写：______元整）。<br>
+        2. 租赁期满，乙方结清相关费用且房屋及设施无人为损坏的，甲方应在乙方交还房屋之日起7个工作日内将押金全额无息退还乙方。</p>
+
+        <p><strong>第五条 其他费用</strong><br>
+        租赁期内，下列费用由乙方承担：(1)水费 (2)电费 (3)燃气费 (4)网络费 (5)物业管理费。上述费用乙方应按相关部门或机构的规定按时足额缴纳。</p>
+
+        <p><strong>第六条 房屋使用及维护</strong><br>
+        1. 乙方应合理使用并爱护该房屋及其附属设施。<br>
+        2. 因乙方使用不当或不合理使用造成该房屋或其附属设施损坏或故障的，乙方应负责维修或承担赔偿责任。<br>
+        3. 未经甲方书面同意，乙方不得擅自转租、转借该房屋。</p>
+
+        <p><strong>第七条 合同解除</strong><br>
+        1. 经甲乙双方协商一致，可以解除本合同。<br>
+        2. 因不可抗力导致本合同无法继续履行的，本合同自行解除。<br>
+        3. 乙方有下列情形之一的，甲方有权单方解除合同，收回房屋：(1)擅自将房屋转租、转借的；(2)擅自拆改房屋结构或改变房屋用途的；(3)累计拖欠租金超过15日的。</p>
+
+        <p><strong>第八条 违约责任</strong><br>
+        1. 甲方未按约定时间交付房屋或乙方未按约定时间支付租金的，违约方应按日向守约方支付相当于月租金1%的违约金。<br>
+        2. 租赁期内，甲方需提前收回房屋或乙方需提前退租的，应提前30日通知对方，并按月租金的100%向对方支付违约金。</p>
+
+        <p><strong>第九条 争议解决</strong><br>
+        本合同在履行中发生争议的，由甲乙双方协商解决；协商不成的，依法向房屋所在地人民法院提起诉讼。</p>
+
+        <p><strong>第十条 其他约定</strong><br>
+        1. 本合同一式两份，甲乙双方各执一份，具有同等法律效力。<br>
+        2. 本合同自甲乙双方签字（或盖章）之日起生效。<br>
+        3. 本合同未尽事宜，由甲乙双方另行协商并签订补充协议，补充协议与本合同具有同等法律效力。</p>
+
+        <div class="signature-line">
+          <span>出租方（甲方）签字：__________<br>日期：______年______月______日</span>
+          <span>承租方（乙方）签字：__________<br>日期：______年______月______日</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 表单 -->
+    <div class="form-card">
+      <h3>✍️ 承租方信息填写</h3>
+
+      <div class="form-group">
+        <label>姓名<span class="required">*</span></label>
+        <input type="text" id="inputName" placeholder="请输入您的真实姓名" maxlength="30" autocomplete="name">
+        <div class="error-msg" id="errName">请输入姓名</div>
+      </div>
+
+      <div class="form-group">
+        <label>身份证号码<span class="required">*</span></label>
+        <input type="text" id="inputIdCard" placeholder="请输入18位身份证号码" maxlength="18" autocomplete="off">
+        <div class="error-msg" id="errIdCard">请输入正确的18位身份证号码</div>
+      </div>
+
+      <div class="form-group">
+        <label>手机号码<span class="required">*</span></label>
+        <input type="tel" id="inputPhone" placeholder="请输入11位手机号码" maxlength="11" autocomplete="tel">
+        <div class="error-msg" id="errPhone">请输入正确的11位手机号码</div>
+      </div>
+
+      <!-- 勾选框 -->
+      <div class="agree-box" id="agreeBox" onclick="toggleAgree()">
+        <div class="checkbox-icon" id="checkIcon">✓</div>
+        <div class="agree-text">本人已仔细阅读并完全同意上述租赁协议全部条款。</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================= -->
+  <!-- PAGE 2: 支付环节 -->
+  <!-- ============================================= -->
+  <div class="page" id="pagePayment">
+
+    <div class="status-banner">
+      <span class="check-icon">✅</span>
+      <h3>合同已签署，待支付生效</h3>
+      <p>请在下方完成租金支付以激活合同</p>
+    </div>
+
+    <div class="payment-card">
+      <h3>支付租金</h3>
+      <div class="amount"><span>¥</span>1,500.00</div>
+
+      <div class="qr-wrapper" id="qrWrapper">
+        <!-- 用户替换为实际的收款码图片 -->
+        <img src="收款码.jpg" alt="收款码" id="qrImage"
+             onerror="this.style.display='none';document.getElementById('qrPlaceholder').style.display='block';">
+        <div class="qr-placeholder" id="qrPlaceholder" style="display:none;">
+          <div style="font-size:36px;margin-bottom:8px;">📱</div>
+          请将您的微信收款码图片<br>重命名为 <strong>收款码.jpg</strong><br>放在与此HTML同一目录下
+        </div>
+      </div>
+
+      <div class="qr-tip">
+        ⚠️ 请长按识别此收款码完成支付<br>支付完成后，请返回点击下方按钮确认订单
+      </div>
+      <div class="qr-note">
+        支付金额：¥1,500.00（押一付一）
+      </div>
+    </div>
+
+    <div class="info-card">
+      <span class="info-icon">ℹ️</span>
+      <span>若微信内无法长按识别，请截图保存收款码后，使用微信"扫一扫"从相册选择二维码完成支付。</span>
+    </div>
+
+  </div>
+
+  <!-- ============================================= -->
+  <!-- PAGE 3: 完成页 -->
+  <!-- ============================================= -->
+  <div class="page" id="pageSuccess">
+    <div class="success-card">
+      <div class="big-check">✓</div>
+      <h2>合同签署完成</h2>
+      <p style="color:var(--text-secondary);font-size:14px;">您的租赁合同已正式生效</p>
+
+      <div class="order-info">
+        <div class="row"><span class="label">合同编号</span><span class="value" id="infoContractId">ZL-2026-00158</span></div>
+        <div class="row"><span class="label">承租方</span><span class="value" id="infoName">--</span></div>
+        <div class="row"><span class="label">身份证号</span><span class="value" id="infoIdCard">--</span></div>
+        <div class="row"><span class="label">手机号</span><span class="value" id="infoPhone">--</span></div>
+        <div class="row"><span class="label">签署时间</span><span class="value" id="infoTime">--</span></div>
+        <div class="row"><span class="label">合同状态</span><span class="value" style="color:var(--success);font-weight:600;">已生效</span></div>
+      </div>
+
+      <p style="font-size:12px;color:#bbb;margin-top:16px;">合同已发送至您的手机号，请注意查收</p>
+    </div>
+  </div>
+
+  <!-- ===== Bottom Action Bar ===== -->
+  <div class="action-area" id="actionArea">
+    <!-- Countdown -->
+    <div class="countdown-row" id="countdownRow">
+      <div class="countdown-ring">
+        <svg width="36" height="36" viewBox="0 0 36 36">
+          <circle class="bg-circle" cx="18" cy="18" r="15"/>
+          <circle class="fg-circle" id="countdownCircle" cx="18" cy="18" r="15"
+                  stroke-dasharray="94.25" stroke-dashoffset="0"/>
+        </svg>
+        <div class="countdown-number" id="countdownNumber">10</div>
+      </div>
+      <span class="countdown-text">请耐心阅读合同 <em id="countdownText">(10秒)</em></span>
+    </div>
+
+    <!-- Page 1 Button -->
+    <button class="btn-submit" id="btnSubmit" disabled onclick="goToPayment()">
+      <span class="lock-icon">🔒</span> 同意并继续
+    </button>
+
+    <!-- Page 2 Button -->
+    <button class="btn-confirm" id="btnConfirm" style="display:none;" onclick="confirmPayment()">
+      我已支付完成，确认订单
+    </button>
+  </div>
+
+  <!-- ===== Modal: 微信支付跳转过渡 ===== -->
+  <div class="modal-overlay" id="modalWechatPay">
+    <div class="modal-box">
+      <div class="spinner"></div>
+      <h3>即将跳转微信支付</h3>
+      <p>正在为您拉起微信支付收银台，请稍候...</p>
+      <button class="btn-close" onclick="closeModal()">取消</button>
+    </div>
+  </div>
+
+  <!-- ===== Toast ===== -->
+  <div class="toast" id="toast"></div>
+
+</div>
+
+<script>
+  // ==================== 全局状态 ====================
+  const TOTAL_SECONDS = 10;
+  let countdownLeft = TOTAL_SECONDS;
+  let countdownTimer = null;
+  let hasScrolledToBottom = false;
+  let isAgreed = false;
+  let countdownDone = false;
+  let currentPage = 1;
+
+  // ==================== DOM 引用 ====================
+  const $readingBar = document.getElementById('readingBar');
+  const $contractBody = document.getElementById('contractBody');
+  const $countdownNumber = document.getElementById('countdownNumber');
+  const $countdownText = document.getElementById('countdownText');
+  const $countdownCircle = document.getElementById('countdownCircle');
+  const $countdownRow = document.getElementById('countdownRow');
+  const $btnSubmit = document.getElementById('btnSubmit');
+  const $btnConfirm = document.getElementById('btnConfirm');
+  const $agreeBox = document.getElementById('agreeBox');
+  const $checkIcon = document.getElementById('checkIcon');
+  const $actionArea = document.getElementById('actionArea');
+  const $modalWechatPay = document.getElementById('modalWechatPay');
+  const $toast = document.getElementById('toast');
+
+  const $inputName = document.getElementById('inputName');
+  const $inputIdCard = document.getElementById('inputIdCard');
+  const $inputPhone = document.getElementById('inputPhone');
+
+  // Step dots
+  const $stepDot1 = document.getElementById('stepDot1');
+  const $stepDot2 = document.getElementById('stepDot2');
+  const $stepDot3 = document.getElementById('stepDot3');
+  const $stepLine = document.getElementById('stepLine');
+  const $stepLine2 = document.getElementById('stepLine2');
+
+  // Pages
+  const $pageContract = document.getElementById('pageContract');
+  const $pagePayment = document.getElementById('pagePayment');
+  const $pageSuccess = document.getElementById('pageSuccess');
+
+  // 圆环周长
+  const CIRCLE_LENGTH = 94.25; // 2 * PI * 15 ≈ 94.25
+  $countdownCircle.style.strokeDasharray = CIRCLE_LENGTH;
+  $countdownCircle.style.strokeDashoffset = '0';
+
+  // ==================== 阅读进度追踪 ====================
+  function updateReadingProgress() {
+    const el = $contractBody;
+    const scrollBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    if (scrollBottom < 40) {
+      hasScrolledToBottom = true;
+    }
+    const pct = Math.min(100, (el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100);
+    $readingBar.style.width = pct + '%';
+  }
+
+  // ==================== 倒计时 ====================
+  function startCountdown() {
+    updateCountdownDisplay();
+    countdownTimer = setInterval(() => {
+      countdownLeft--;
+      updateCountdownDisplay();
+      if (countdownLeft <= 0) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+        countdownDone = true;
+        $countdownText.textContent = '(阅读完成)';
+        $countdownNumber.textContent = '✓';
+        $countdownNumber.style.color = '#27ae60';
+        $countdownCircle.style.stroke = '#27ae60';
+        updateButtonState();
+      }
+    }, 1000);
+  }
+
+  function updateCountdownDisplay() {
+    $countdownNumber.textContent = countdownLeft;
+    const offset = CIRCLE_LENGTH * (1 - countdownLeft / TOTAL_SECONDS);
+    $countdownCircle.style.strokeDashoffset = offset;
+  }
+
+  // ==================== 勾选同意 ====================
+  function toggleAgree() {
+    isAgreed = !isAgreed;
+    if (isAgreed) {
+      $agreeBox.classList.add('checked');
+    } else {
+      $agreeBox.classList.remove('checked');
+    }
+    updateButtonState();
+  }
+
+  // ==================== 按钮状态更新 ====================
+  function updateButtonState() {
+    if (countdownDone && isAgreed && hasScrolledToBottom) {
+      $btnSubmit.disabled = false;
+      $btnSubmit.classList.add('enabled');
+      $btnSubmit.innerHTML = '同意并继续 →';
+    } else {
+      $btnSubmit.disabled = true;
+      $btnSubmit.classList.remove('enabled');
+      let lockText = '🔒 同意并继续';
+      if (!hasScrolledToBottom) lockText = '🔒 请先阅读完合同';
+      else if (!countdownDone) lockText = '🔒 同意并继续';
+      else if (!isAgreed) lockText = '🔒 请勾选同意条款';
+      $btnSubmit.innerHTML = lockText;
+    }
+  }
+
+  // ==================== 输入校验 ====================
+  function validateIdCard(id) {
+    if (id.length !== 18) return false;
+    const re = /^\d{17}[\dXx]$/;
+    if (!re.test(id)) return false;
+    // 简单校验码检查
+    const weights = [7,9,10,5,8,4,2,1,6,3,7,9,10,5,8,4,2];
+    const checkMap = ['1','0','X','9','8','7','6','5','4','3','2'];
+    let sum = 0;
+    for (let i = 0; i < 17; i++) sum += parseInt(id[i]) * weights[i];
+    const expected = checkMap[sum % 11];
+    return id[17].toUpperCase() === expected;
+  }
+
+  function validatePhone(phone) {
+    return /^1[3-9]\d{9}$/.test(phone);
+  }
+
+  function validateForm() {
+    let valid = true;
+
+    // 姓名
+    if ($inputName.value.trim().length < 2) {
+      $inputName.classList.add('error');
+      valid = false;
+    } else {
+      $inputName.classList.remove('error');
+    }
+
+    // 身份证
+    if (!validateIdCard($inputIdCard.value.trim())) {
+      $inputIdCard.classList.add('error');
+      valid = false;
+    } else {
+      $inputIdCard.classList.remove('error');
+    }
+
+    // 手机号
+    if (!validatePhone($inputPhone.value.trim())) {
+      $inputPhone.classList.add('error');
+      valid = false;
+    } else {
+      $inputPhone.classList.remove('error');
+    }
+
+    return valid;
+  }
+
+  // 实时清除错误状态
+  [$inputName, $inputIdCard, $inputPhone].forEach(el => {
+    el.addEventListener('input', () => el.classList.remove('error'));
+  });
+
+  // ==================== 页面跳转 ====================
+  function goToPayment() {
+    if (!validateForm()) {
+      showToast('请正确填写所有必填信息');
+      return;
+    }
+
+    // 先显示微信支付跳转过渡
+    showWechatPayModal();
+
+    // 1.5秒后关闭弹窗，切换到支付页
+    setTimeout(() => {
+      closeModal();
+      switchToPage(2);
+    }, 1500);
+  }
+
+  function showWechatPayModal() {
+    $modalWechatPay.classList.add('show');
+  }
+
+  function closeModal() {
+    $modalWechatPay.classList.remove('show');
+  }
+
+  function switchToPage(pageNum) {
+    currentPage = pageNum;
+    $pageContract.classList.remove('active');
+    $pagePayment.classList.remove('active');
+    $pageSuccess.classList.remove('active');
+
+    if (pageNum === 1) {
+      $pageContract.classList.add('active');
+      $btnSubmit.style.display = 'block';
+      $btnConfirm.style.display = 'none';
+      $countdownRow.style.display = 'flex';
+    } else if (pageNum === 2) {
+      $pagePayment.classList.add('active');
+      $btnSubmit.style.display = 'none';
+      $btnConfirm.style.display = 'block';
+      $countdownRow.style.display = 'none';
+
+      $stepDot1.className = 'step-dot done';
+      $stepDot1.textContent = '✓';
+      $stepDot2.className = 'step-dot active';
+      $stepLine.classList.add('done');
+
+      // 滚动到顶部
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (pageNum === 3) {
+      $pageSuccess.classList.add('active');
+      $actionArea.style.display = 'none';
+
+      $stepDot2.className = 'step-dot done';
+      $stepDot2.textContent = '✓';
+      $stepDot3.className = 'step-dot active';
+      $stepLine2.classList.add('done');
+
+      // 填充完成信息
+      document.getElementById('infoName').textContent = $inputName.value.trim();
+      document.getElementById('infoIdCard').textContent = maskIdCard($inputIdCard.value.trim());
+      document.getElementById('infoPhone').textContent = maskPhone($inputPhone.value.trim());
+      document.getElementById('infoTime').textContent = formatDateTime(new Date());
+      document.getElementById('infoContractId').textContent = 'ZL-' + new Date().getFullYear() + '-' +
+        String(Math.floor(Math.random() * 90000 + 10000));
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  function confirmPayment() {
+    switchToPage(3);
+  }
+
+  // ==================== 工具函数 ====================
+  function maskIdCard(id) {
+    if (id.length !== 18) return id;
+    return id.substring(0, 3) + '***********' + id.substring(14);
+  }
+
+  function maskPhone(phone) {
+    if (phone.length !== 11) return phone;
+    return phone.substring(0, 3) + '****' + phone.substring(7);
+  }
+
+  function formatDateTime(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const h = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    return y + '-' + m + '-' + day + ' ' + h + ':' + min;
+  }
+
+  function showToast(msg) {
+    $toast.textContent = msg;
+    $toast.classList.add('show');
+    clearTimeout($toast._timeout);
+    $toast._timeout = setTimeout(() => $toast.classList.remove('show'), 2000);
+  }
+
+  // ==================== 初始化 ====================
+  function init() {
+    startCountdown();
+
+    // 初始按钮状态
+    updateButtonState();
+
+    // 监听合同滚动到底部
+    $contractBody.addEventListener('scroll', () => {
+      updateReadingProgress();
+      const scrollBottom = $contractBody.scrollHeight - $contractBody.scrollTop - $contractBody.clientHeight;
+      if (scrollBottom < 40) {
+        hasScrolledToBottom = true;
+        updateButtonState();
+      }
+    });
+
+    // 初始阅读进度
+    updateReadingProgress();
+  }
+
+  init();
+</script>
+
+</body>
+</html>
